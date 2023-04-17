@@ -1,0 +1,28 @@
+### 1. Register user
+POST {{server_address}}/user/register
+Content-Type: application/json; charset=UTF-8
+
+{
+  "first_name": "Имя",
+  "second_name": "Фамилия",
+  "age": 18,
+  "biography": "Хобби, интересы и т.п.",
+  "city": "Москва",
+  "password": "Секретная строка"
+}
+
+> {% client.global.set("user_id", response.body.user_id); %}
+
+### 2. Login user
+POST {{server_address}}/login
+Content-Type: application/json; charset=UTF-8
+
+{
+  "id": "1",
+  "password": "Секретная строка"
+}
+
+> {% client.global.set("user_id", response.body.token); %}
+
+### 3. Get user
+GET {{server_address}}/user/get/{{user_id}}
