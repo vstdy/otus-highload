@@ -7,7 +7,7 @@ import (
 )
 
 // NewServer returns new rest server.
-func NewServer(svc project.Service, config Config) (*http.Server, error) {
+func NewServer(svc project.IService, config Config) (*http.Server, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}

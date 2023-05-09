@@ -8,27 +8,27 @@ import (
 
 	"github.com/vstdy/otus-highload/pkg/logging"
 	"github.com/vstdy/otus-highload/service/project"
-	inter "github.com/vstdy/otus-highload/storage"
+	"github.com/vstdy/otus-highload/storage"
 )
 
 const (
 	serviceName = "Project service"
 )
 
-var _ project.Service = (*Service)(nil)
+var _ project.IService = (*Service)(nil)
 
 type (
 	// Service keeps service dependencies.
 	Service struct {
-		storage inter.Storage
+		storage storage.IStorage
 	}
 
 	// ServiceOption defines functional argument for Service constructor.
 	ServiceOption func(*Service) error
 )
 
-// WithStorage sets Storage.
-func WithStorage(st inter.Storage) ServiceOption {
+// WithStorage sets IStorage.
+func WithStorage(st storage.IStorage) ServiceOption {
 	return func(svc *Service) error {
 		svc.storage = st
 

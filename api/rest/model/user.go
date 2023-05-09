@@ -77,8 +77,8 @@ func NewRegisterResponse(user model.User) RegisterResponse {
 	}
 }
 
-// GetUserResponse ...
-type GetUserResponse struct {
+// UserResponse ...
+type UserResponse struct {
 	UUID       uuid.UUID `json:"id"`
 	FirstName  string    `json:"first_name"`
 	SecondName string    `json:"second_name"`
@@ -88,8 +88,8 @@ type GetUserResponse struct {
 }
 
 // NewGetUserResponse ...
-func NewGetUserResponse(user model.User) GetUserResponse {
-	return GetUserResponse{
+func NewGetUserResponse(user model.User) UserResponse {
+	return UserResponse{
 		UUID:       user.UUID,
 		FirstName:  user.FirstName,
 		SecondName: user.SecondName,
@@ -97,4 +97,22 @@ func NewGetUserResponse(user model.User) GetUserResponse {
 		Biography:  user.Biography,
 		City:       user.City,
 	}
+}
+
+// NewSearchUsersResponse ...
+func NewSearchUsersResponse(users []model.User) []UserResponse {
+	res := make([]UserResponse, 0, len(users))
+	for _, user := range users {
+		obj := UserResponse{
+			UUID:       user.UUID,
+			FirstName:  user.FirstName,
+			SecondName: user.SecondName,
+			Age:        user.Age,
+			Biography:  user.Biography,
+			City:       user.City,
+		}
+		res = append(res, obj)
+	}
+
+	return res
 }

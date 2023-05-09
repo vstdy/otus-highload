@@ -16,9 +16,9 @@ type User struct {
 	FirstName  string
 	SecondName string
 	Age        uint8
-	Biography  string
+	Biography  sql.NullString
 	City       string
-	Password   string
+	Password   sql.NullString
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  sql.NullTime
@@ -32,11 +32,23 @@ func (u User) ToCanonical() model.User {
 		FirstName:  u.FirstName,
 		SecondName: u.SecondName,
 		Age:        u.Age,
-		Biography:  u.Biography,
+		Biography:  u.Biography.String,
 		City:       u.City,
-		Password:   u.Password,
+		Password:   u.Password.String,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,
 		DeletedAt:  u.DeletedAt.Time,
 	}
+}
+
+type Users []User
+
+func (u Users) ToCanonical() []model.User {
+	objs := make([]model.User, 0, len(u))
+	for _, dbObj := range u {
+		obj := dbObj.ToCanonical()
+		objs = append(objs, obj)
+	}
+
+	return objs
 }

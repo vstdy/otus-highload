@@ -9,6 +9,7 @@ By default, server starts at `8080` HTTP port with the following endpoints:
 - `POST /login` — login user;
 - `POST /user/register` — register user;
 - `GET /user/get/{id}` — get user data;
+- `GET /user/search` — get users data by name;
 
 For details check out [***http-client.http***](./http-client.http) file
 

@@ -53,3 +53,8 @@ func (svc *Service) AuthenticateUser(ctx context.Context, rawObj model.User) (mo
 func (svc *Service) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User, error) {
 	return svc.storage.GetUser(ctx, userUUID)
 }
+
+// SearchUsers searches users.
+func (svc *Service) SearchUsers(ctx context.Context, searchParams model.SearchUser) ([]model.User, error) {
+	return svc.storage.SearchUsers(ctx, searchParams)
+}

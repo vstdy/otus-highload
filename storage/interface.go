@@ -10,8 +10,8 @@ import (
 	"github.com/vstdy/otus-highload/model"
 )
 
-// Storage ...
-type Storage interface {
+// IStorage ...
+type IStorage interface {
 	io.Closer
 	Migrate
 	User
@@ -31,4 +31,8 @@ type User interface {
 	AuthenticateUser(ctx context.Context, obj model.User) (model.User, error)
 	// GetUser returns user data.
 	GetUser(ctx context.Context, userUUID uuid.UUID) (model.User, error)
+	// SearchUsers searches users.
+	SearchUsers(ctx context.Context, searchParams model.SearchUser) ([]model.User, error)
+	// CopyUsers copies users to storage.
+	CopyUsers(ctx context.Context, objs []model.User) (int64, error)
 }

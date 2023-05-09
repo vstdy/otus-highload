@@ -2,9 +2,21 @@ version: "3.9"
 name: "otus-project"
 
 services:
+  project:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    container_name: otus-project
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_DSN=postgres://user:password@postgres:5432/project?sslmode=disable
+
   postgres:
-    image: "postgres:15.2-alpine"
-    container_name: "otus-project-postgres"
+    image: postgres:15.2-alpine
+    container_name: otus-project-postgres
+    ports:
+      - "5555:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -12,25 +24,39 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=project
 
-  project:
-    build:
-      context: ..
-      dockerfile: build/Dockerfile
-    container_name: "otus-project"
-    depends_on:
-      - postgres
-    environment:
-      - DATABASE_DSN=postgres://user:password@postgres:5432/project?sslmode=disable
-
   nginx:
-    image: "nginx:1.23.4-alpine"
-    container_name: "otus-project-nginx"
+    image: nginx:1.23.4-alpine
+    container_name: otus-project-nginx
     ports:
       - "8080:80"
     volumes:
       - ./resources/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - project
+
+  prometheus:
+    image: prom/prometheus:v2.43.0
+    container_name: otus-project-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  grafana:
+    image: grafana/grafana:9.5.1
+    container_name: otus-project-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
 
 volumes:
   postgres_data:

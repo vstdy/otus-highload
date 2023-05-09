@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/vstdy/otus-highload/api/metrics"
 	"github.com/vstdy/otus-highload/api/rest"
 	"github.com/vstdy/otus-highload/pkg"
 	"github.com/vstdy/otus-highload/service/project/v1"
@@ -15,11 +16,12 @@ import (
 
 // Config combines sub-configs for all services, storages and providers.
 type Config struct {
-	Timeout     time.Duration `mapstructure:"timeout"`
-	LogLevel    zerolog.Level `mapstructure:"-"`
-	StorageType string        `mapstructure:"storage_type"`
-	HTTPServer  rest.Config   `mapstructure:"server,squash"`
-	PSQLStorage psql.Config   `mapstructure:"psql_storage,squash"`
+	Timeout           time.Duration  `mapstructure:"timeout"`
+	LogLevel          zerolog.Level  `mapstructure:"-"`
+	StorageType       string         `mapstructure:"storage_type"`
+	HTTPServer        rest.Config    `mapstructure:"server,squash"`
+	HTTPMetricsServer metrics.Config `mapstructure:"metrics_server,squash"`
+	PSQLStorage       psql.Config    `mapstructure:"psql_storage,squash"`
 }
 
 const (
@@ -29,11 +31,12 @@ const (
 // BuildDefaultConfig builds a Config with default values.
 func BuildDefaultConfig() Config {
 	return Config{
-		Timeout:     5 * time.Second,
-		LogLevel:    zerolog.InfoLevel,
-		StorageType: psqlStorage,
-		HTTPServer:  rest.NewDefaultConfig(),
-		PSQLStorage: psql.NewDefaultConfig(),
+		Timeout:           5 * time.Second,
+		LogLevel:          zerolog.InfoLevel,
+		StorageType:       psqlStorage,
+		HTTPServer:        rest.NewDefaultConfig(),
+		HTTPMetricsServer: metrics.NewDefaultConfig(),
+		PSQLStorage:       psql.NewDefaultConfig(),
 	}
 }
 
@@ -55,8 +58,8 @@ func (config Config) BuildService() (*project.Service, error) {
 }
 
 // BuildStorage builds storage dependency.
-func (config Config) BuildStorage() (storage.Storage, error) {
-	var st storage.Storage
+func (config Config) BuildStorage() (storage.IStorage, error) {
+	var st storage.IStorage
 	var err error
 
 	switch config.StorageType {

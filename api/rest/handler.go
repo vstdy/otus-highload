@@ -12,24 +12,25 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/vstdy/otus-highload/api/rest/model"
+	canonical "github.com/vstdy/otus-highload/model"
 	"github.com/vstdy/otus-highload/pkg"
 	"github.com/vstdy/otus-highload/pkg/logging"
 	"github.com/vstdy/otus-highload/service/project"
 )
 
 const (
-	serviceName = "Project server"
+	serviceName = "otus-project server"
 )
 
 // Handler keeps handler dependencies.
 type Handler struct {
-	service  project.Service
+	service  project.IService
 	jwtAuth  *jwtauth.JWTAuth
 	logLevel zerolog.Level
 }
 
 // NewHandler returns a new Handler instance.
-func NewHandler(service project.Service, jwtAuth *jwtauth.JWTAuth, logLevel zerolog.Level) Handler {
+func NewHandler(service project.IService, jwtAuth *jwtauth.JWTAuth, logLevel zerolog.Level) Handler {
 	return Handler{service: service, jwtAuth: jwtAuth, logLevel: logLevel}
 }
 
@@ -144,6 +145,36 @@ func (h Handler) getUser(w http.ResponseWriter, r *http.Request) {
 
 	getUserResponse := model.NewGetUserResponse(obj)
 	res, err := json.Marshal(getUserResponse)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if _, err = w.Write(res); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// searchUser searches users.
+func (h Handler) searchUsers(w http.ResponseWriter, r *http.Request) {
+	firstName := r.URL.Query().Get("first_name")
+	lastName := r.URL.Query().Get("last_name")
+	if firstName == "" && lastName == "" {
+		http.Error(w, pkg.ErrInvalidInput.Error(), http.StatusBadRequest)
+		return
+	}
+
+	searchParams := canonical.SearchUser{FirstName: firstName, LastName: lastName}
+	objs, err := h.service.SearchUsers(r.Context(), searchParams)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	searchUsersResponse := model.NewSearchUsersResponse(objs)
+	res, err := json.Marshal(searchUsersResponse)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/vstdy/otus-highload/api/metrics"
 	"github.com/vstdy/otus-highload/api/rest"
 	"github.com/vstdy/otus-highload/cmd/project/cmd/common"
 	"github.com/vstdy/otus-highload/pkg/logging"
@@ -46,7 +47,7 @@ func newRootCmd() *cobra.Command {
 			config := common.GetConfigFromCmdCtx(cmd)
 			logger := logging.NewLogger(logging.WithLogLevel(config.LogLevel))
 
-			// Build server
+			// Build servers
 			svc, err := config.BuildService()
 			if err != nil {
 				return fmt.Errorf("app initialization: service building: %w", err)
@@ -57,10 +58,21 @@ func newRootCmd() *cobra.Command {
 				return fmt.Errorf("app initialization: server building: %w", err)
 			}
 
-			// Run server
+			metricsSrv, err := metrics.NewMetricsServer(config.HTTPMetricsServer)
+			if err != nil {
+				return fmt.Errorf("app initialization: metrics server building: %w", err)
+			}
+
+			// Run servers
 			go func() {
 				if err = srv.ListenAndServe(); err != http.ErrServerClosed {
 					logger.Error().Err(err).Msg("HTTP server ListenAndServe")
+				}
+			}()
+
+			go func() {
+				if err = metricsSrv.ListenAndServe(); err != http.ErrServerClosed {
+					logger.Error().Err(err).Msg("metrics HTTP server ListenAndServe")
 				}
 			}()
 
@@ -68,11 +80,14 @@ func newRootCmd() *cobra.Command {
 			signal.Notify(stop, os.Interrupt)
 			<-stop
 
-			// Stop server
+			// Stop servers
 			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer shutdownCancel()
 			if err = srv.Shutdown(shutdownCtx); err != nil {
 				return fmt.Errorf("server shutdown failed: %w", err)
+			}
+			if err = metricsSrv.Shutdown(shutdownCtx); err != nil {
+				return fmt.Errorf("metrics server shutdown failed: %w", err)
 			}
 
 			if err = svc.Close(); err != nil {
@@ -85,13 +100,14 @@ func newRootCmd() *cobra.Command {
 	}
 
 	config := common.BuildDefaultConfig()
-	cmd.PersistentFlags().String(flagConfigPath, "./config.yaml", "Config file path")
+	cmd.PersistentFlags().String(flagConfigPath, "./config.yml", "Config file path")
 	cmd.PersistentFlags().StringP(flagLogLevel, "l", config.LogLevel.String(), "Logger level [debug,info,warn,error,fatal]")
 	cmd.PersistentFlags().Duration(flagTimeout, config.Timeout, "Request timeout")
 	cmd.PersistentFlags().StringP(flagDatabaseDSN, "d", config.PSQLStorage.DSN, "Database source name")
 	cmd.Flags().StringP(flagServerAddress, "a", config.HTTPServer.ServerAddress, "Server address")
 
 	cmd.AddCommand(newMigrateCmd())
+	cmd.AddCommand(newGenerateCmd())
 
 	return cmd
 }

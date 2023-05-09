@@ -9,7 +9,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 
-	inter "github.com/vstdy/otus-highload/storage"
+	"github.com/vstdy/otus-highload/storage"
 	"github.com/vstdy/otus-highload/storage/psql/migrations"
 )
 
@@ -20,7 +20,7 @@ const (
 	dbOperationLoggingKey = "db-operation"
 )
 
-var _ inter.Storage = (*Storage)(nil)
+var _ storage.IStorage = (*Storage)(nil)
 
 type (
 	// Storage keeps psql storage dependencies.

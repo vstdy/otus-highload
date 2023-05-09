@@ -56,9 +56,6 @@ func (u User) ValidateCreation() error {
 	if u.Age > 100 && u.Age < 7 {
 		return fmt.Errorf("%w: age must be in range from 7 to 100", pkg.ErrInvalidInput)
 	}
-	if u.Biography == "" {
-		return fmt.Errorf("%w: biography is empty", pkg.ErrInvalidInput)
-	}
 	if u.City == "" {
 		return fmt.Errorf("%w: city is empty", pkg.ErrInvalidInput)
 	}
@@ -79,4 +76,10 @@ func (u User) ValidateAuthentication() error {
 	}
 
 	return nil
+}
+
+// SearchUser ...
+type SearchUser struct {
+	FirstName string
+	LastName  string
 }

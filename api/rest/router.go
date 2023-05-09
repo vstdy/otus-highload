@@ -10,7 +10,7 @@ import (
 )
 
 // NewRouter returns router.
-func NewRouter(svc project.Service, config Config) (chi.Router, error) {
+func NewRouter(svc project.IService, config Config) (chi.Router, error) {
 	jwtAuth := jwtauth.New(jwa.HS256.String(), []byte(config.SecretKey), nil)
 	h := NewHandler(svc, jwtAuth, config.LogLevel)
 	r := chi.NewRouter()
@@ -24,6 +24,7 @@ func NewRouter(svc project.Service, config Config) (chi.Router, error) {
 			middleware.StripSlashes,
 			middleware.Timeout(config.Timeout),
 			middleware.AllowContentType("application/json"),
+			addMetrics(),
 		)
 
 		// Public routes
@@ -41,6 +42,7 @@ func NewRouter(svc project.Service, config Config) (chi.Router, error) {
 
 			r.Route("/user", func(r chi.Router) {
 				r.Get("/get/{id}", h.getUser)
+				r.Get("/search", h.searchUsers)
 			})
 		})
 	})
