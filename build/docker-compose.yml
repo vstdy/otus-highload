@@ -8,21 +8,99 @@ services:
       dockerfile: build/Dockerfile
     container_name: otus-project
     depends_on:
-      - postgres
+      - pg-master
     environment:
-      - DATABASE_DSN=postgres://user:password@postgres:5432/project?sslmode=disable
+      - DATABASE_DSN=postgres://user:password@pg-master:5432/project?sslmode=disable
+      - ASYNC_REPLICA_DSN=postgres://user:password@pg-async-replica:5432/project?sslmode=disable
 
-  postgres:
+  pg-master:
     image: postgres:15.2-alpine
-    container_name: otus-project-postgres
+    container_name: otus-project-pg-master
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "user" ]
+      timeout: 5s
+      interval: 10s
+      retries: 5
     ports:
       - "5555:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - pg_master_data:/var/lib/postgresql/data
+      - ./postgres/init-master.sh:/docker-entrypoint-initdb.d/1.init-master.sh
+      - ./postgres/enable-sync-replicas.sh:/docker-entrypoint-initdb.d/2.enable-sync-replicas.sh
+      - ./postgres/postgresql.conf:/tmp/postgresql.conf
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=project
+      - POSTGRES_REPLICATION_USER=replicator
+      - POSTGRES_REPLICA_NAME_1=sync_replica_1
+      - POSTGRES_REPLICA_NAME_2=sync_replica_2
+
+  pg-async-replica:
+    image: postgres:15.2-alpine
+    container_name: otus-project-pg-async-replica
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "user" ]
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    ports:
+      - "5556:5432"
+    volumes:
+      - pg_async_replica_data:/var/lib/postgresql/data
+      - ./postgres/replica-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=project
+      - POSTGRES_REPLICATION_USER=replicator
+      - POSTGRES_REPLICA_NAME=async-replica
+    depends_on:
+      - pg-master
+
+  pg-sync-replica-1:
+    image: postgres:15.2-alpine
+    container_name: otus-project-pg-sync-replica-1
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "user" ]
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    ports:
+      - "5557:5432"
+    volumes:
+      - pg_sync_replica_data_1:/var/lib/postgresql/data
+      - ./postgres/replica-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=project
+      - POSTGRES_REPLICATION_USER=replicator
+      - POSTGRES_REPLICA_NAME=sync_replica_1
+    depends_on:
+      - pg-master
+
+  pg-sync-replica-2:
+    image: postgres:15.2-alpine
+    container_name: otus-project-pg-sync-replica-2
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "user" ]
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    ports:
+      - "5558:5432"
+    volumes:
+      - pg_sync_replica_data_2:/var/lib/postgresql/data
+      - ./postgres/replica-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=project
+      - POSTGRES_REPLICATION_USER=replicator
+      - POSTGRES_REPLICA_NAME=sync_replica_2
+    depends_on:
+      - pg-master
 
   nginx:
     image: nginx:1.23.4-alpine
@@ -34,6 +112,45 @@ services:
     depends_on:
       - project
 
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    container_name: otus-project-nginx-exporter
+    environment:
+      - SCRAPE_URI=http://nginx/nginx_status
+      - TELEMETRY_PATH=/metrics
+      - NGINX_RETRIES=3
+    depends_on:
+      - nginx
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: otus-project-node-exporter
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - --path.rootfs=/host
+
+  pg-exporter-master:
+    image: prometheuscommunity/postgres-exporter:v0.12.0
+    container_name: otus-project-pg-exporter-master
+    environment:
+      - DATA_SOURCE_NAME=postgres://user:password@pg-master:5432/project?sslmode=disable
+    depends_on:
+      - pg-master
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    container_name: otus-project-cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    command:
+      - --docker_only=true
+    depends_on:
+      - pg-master
+
   prometheus:
     image: prom/prometheus:v2.43.0
     container_name: otus-project-prometheus
@@ -41,6 +158,12 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=10d
+      - --web.enable-lifecycle
     extra_hosts:
       - host.docker.internal:host-gateway
 
@@ -58,5 +181,25 @@ services:
     depends_on:
       - prometheus
 
+  pgadmin:
+    image: dpage/pgadmin4:7.1
+    container_name: otus-project-pgadmin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=pg@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    depends_on:
+      - pg-master
+
 volumes:
-  postgres_data:
+  pg_master_data:
+  pg_async_replica_data:
+  pg_sync_replica_data_1:
+  pg_sync_replica_data_2:
+  pgadmin_data:
+  prometheus_data:

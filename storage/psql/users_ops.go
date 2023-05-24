@@ -25,7 +25,7 @@ func (st *Storage) CreateUser(ctx context.Context, rawObj model.User) (model.Use
 	args := []interface{}{rawObj.FirstName, rawObj.SecondName, rawObj.Age, rawObj.Biography, rawObj.City, rawObj.Password}
 
 	var dbObj schema.User
-	err := pgxscan.Get(ctx, st.db, &dbObj, query, args...)
+	err := pgxscan.Get(ctx, st.masterConn, &dbObj, query, args...)
 	if err != nil {
 		return model.User{}, err
 	}
@@ -44,7 +44,7 @@ func (st *Storage) AuthenticateUser(ctx context.Context, rawObj model.User) (mod
 	args := []interface{}{rawObj.ID}
 
 	var dbObj schema.User
-	err := pgxscan.Get(ctx, st.db, &dbObj, query, args...)
+	err := pgxscan.Get(ctx, st.masterConn, &dbObj, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.User{}, pkg.ErrWrongCredentials
@@ -58,6 +58,11 @@ func (st *Storage) AuthenticateUser(ctx context.Context, rawObj model.User) (mod
 
 // GetUser returns user data.
 func (st *Storage) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User, error) {
+	conn := st.masterConn
+	if st.asyncReplicaConn != nil {
+		conn = st.asyncReplicaConn
+	}
+
 	query := `
 		SELECT *
 		FROM "user"
@@ -67,7 +72,7 @@ func (st *Storage) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User,
 	args := []interface{}{userUUID}
 
 	var dbObj schema.User
-	err := pgxscan.Get(ctx, st.db, &dbObj, query, args...)
+	err := pgxscan.Get(ctx, conn, &dbObj, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.User{}, pkg.ErrNotFound
@@ -81,6 +86,11 @@ func (st *Storage) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User,
 
 // SearchUsers searches users.
 func (st *Storage) SearchUsers(ctx context.Context, searchParams model.SearchUser) ([]model.User, error) {
+	conn := st.masterConn
+	if st.asyncReplicaConn != nil {
+		conn = st.asyncReplicaConn
+	}
+
 	query := `
 		SELECT *
 		FROM "user"
@@ -92,7 +102,7 @@ func (st *Storage) SearchUsers(ctx context.Context, searchParams model.SearchUse
 	args := []interface{}{searchParams.FirstName, searchParams.LastName}
 
 	var dbObjs schema.Users
-	err := pgxscan.Select(ctx, st.db, &dbObjs, query, args...)
+	err := pgxscan.Select(ctx, conn, &dbObjs, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +118,7 @@ func (st *Storage) CopyUsers(ctx context.Context, objs []model.User) (int64, err
 		return []interface{}{objs[i].FirstName, objs[i].SecondName, objs[i].Age, objs[i].City, objs[i].Password}, nil
 	})
 
-	count, err := st.db.CopyFrom(ctx, tableName, columnNames, rowSrc)
+	count, err := st.masterConn.CopyFrom(ctx, tableName, columnNames, rowSrc)
 	if err != nil {
 		return 0, err
 	}

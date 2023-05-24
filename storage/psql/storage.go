@@ -25,8 +25,9 @@ var _ storage.IStorage = (*Storage)(nil)
 type (
 	// Storage keeps psql storage dependencies.
 	Storage struct {
-		config Config
-		db     *pgxpool.Pool
+		config           Config
+		masterConn       *pgxpool.Pool
+		asyncReplicaConn *pgxpool.Pool
 	}
 
 	// StorageOption defines functional argument for Storage constructor.
@@ -59,14 +60,23 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 
 	ctx := context.Background()
 
-	conn, err := pgxpool.New(ctx, st.config.DSN)
+	masterConn, err := pgxpool.New(ctx, st.config.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("connection for DSN (%s) failed: %w", st.config.DSN, err)
 	}
 
-	st.db = conn
+	var asyncReplicaConn *pgxpool.Pool
+	if st.config.AsyncReplicaDSN != "" {
+		asyncReplicaConn, err = pgxpool.New(ctx, st.config.AsyncReplicaDSN)
+		if err != nil {
+			return nil, fmt.Errorf("connection for DSN (%s) failed: %w", st.config.DSN, err)
+		}
+	}
 
-	if err = st.db.Ping(ctx); err != nil {
+	st.masterConn = masterConn
+	st.asyncReplicaConn = asyncReplicaConn
+
+	if err = st.masterConn.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("ping for DSN (%s) failed: %w", st.config.DSN, err)
 	}
 
@@ -75,11 +85,11 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 
 // Close closes DB connection.
 func (st *Storage) Close() error {
-	if st.db == nil {
+	if st.masterConn == nil {
 		return nil
 	}
 
-	st.db.Close()
+	st.masterConn.Close()
 
 	return nil
 }

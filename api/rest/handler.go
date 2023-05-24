@@ -101,7 +101,7 @@ func (h Handler) register(w http.ResponseWriter, r *http.Request) {
 
 	obj, err := h.service.CreateUser(r.Context(), rawObj)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

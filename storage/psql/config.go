@@ -8,7 +8,8 @@ const (
 
 // Config keeps Storage configuration.
 type Config struct {
-	DSN string `mapstructure:"database_dsn"`
+	DSN             string `mapstructure:"database_dsn"`
+	AsyncReplicaDSN string `mapstructure:"async_replica_dsn"`
 }
 
 // Validate performs a basic validation.
@@ -23,6 +24,7 @@ func (config Config) Validate() error {
 // NewDefaultConfig builds a Config with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		DSN: defaultConfigEndpoint,
+		DSN:             defaultConfigEndpoint,
+		AsyncReplicaDSN: "",
 	}
 }

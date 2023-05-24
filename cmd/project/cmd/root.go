@@ -19,12 +19,13 @@ import (
 )
 
 const (
-	flagConfigPath    = "config"
-	flagLogLevel      = "log_level"
-	flagTimeout       = "timeout"
-	flagServerAddress = "server_address"
-	envSecretKey      = "secret_key"
-	flagDatabaseDSN   = "database_dsn"
+	flagConfigPath              = "config"
+	flagLogLevel                = "log_level"
+	flagTimeout                 = "timeout"
+	flagServerAddress           = "server_address"
+	envSecretKey                = "secret_key"
+	flagDatabaseDSN             = "database_dsn"
+	flagDatabaseAsyncReplicaDSN = "async_replica_dsn"
 )
 
 // Execute prepares cobra.Command context and executes root cmd.
@@ -104,6 +105,7 @@ func newRootCmd() *cobra.Command {
 	cmd.PersistentFlags().StringP(flagLogLevel, "l", config.LogLevel.String(), "Logger level [debug,info,warn,error,fatal]")
 	cmd.PersistentFlags().Duration(flagTimeout, config.Timeout, "Request timeout")
 	cmd.PersistentFlags().StringP(flagDatabaseDSN, "d", config.PSQLStorage.DSN, "Database source name")
+	cmd.PersistentFlags().StringP(flagDatabaseAsyncReplicaDSN, "r", config.PSQLStorage.AsyncReplicaDSN, "Database source name")
 	cmd.Flags().StringP(flagServerAddress, "a", config.HTTPServer.ServerAddress, "Server address")
 
 	cmd.AddCommand(newMigrateCmd())
