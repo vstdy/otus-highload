@@ -6,13 +6,14 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 
+	"github.com/vstdy/otus-highload/api/rest/handler"
 	"github.com/vstdy/otus-highload/service/project"
 )
 
 // NewRouter returns router.
 func NewRouter(svc project.IService, config Config) (chi.Router, error) {
 	jwtAuth := jwtauth.New(jwa.HS256.String(), []byte(config.SecretKey), nil)
-	h := NewHandler(svc, jwtAuth, config.LogLevel)
+	h := handler.NewHandler(svc, jwtAuth, config.LogLevel)
 	r := chi.NewRouter()
 
 	r.Route("/", func(r chi.Router) {
@@ -29,8 +30,8 @@ func NewRouter(svc project.IService, config Config) (chi.Router, error) {
 
 		// Public routes
 		r.Group(func(r chi.Router) {
-			r.Post("/login", h.login)
-			r.Post("/user/register", h.register)
+			r.Post("/login", h.Login)
+			r.Post("/user/register", h.Register)
 		})
 
 		// Protected routes
@@ -41,8 +42,21 @@ func NewRouter(svc project.IService, config Config) (chi.Router, error) {
 			)
 
 			r.Route("/user", func(r chi.Router) {
-				r.Get("/get/{id}", h.getUser)
-				r.Get("/search", h.searchUsers)
+				r.Get("/get/{id}", h.GetUser)
+				r.Get("/search", h.SearchUsers)
+			})
+
+			r.Route("/friend", func(r chi.Router) {
+				r.Put("/set/{id}", h.SetFriend)
+				r.Put("/delete/{id}", h.DeleteFriend)
+			})
+
+			r.Route("/post", func(r chi.Router) {
+				r.Post("/create", h.CreatePost)
+				r.Put("/update", h.UpdatePost)
+				r.Put("/delete/{id}", h.DeletePost)
+				r.Get("/get/{id}", h.GetPost)
+				r.Get("/feed", h.GetFeed)
 			})
 		})
 	})

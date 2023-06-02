@@ -19,7 +19,7 @@ Content-Type: application/json; charset=UTF-8
 
 {
   "id": "1",
-  "password": "Секретная строка"
+  "password": "password"
 }
 
 > {% client.global.set("user_id", response.body.token); %}
@@ -29,3 +29,37 @@ GET {{server_address}}/user/get/{{user_id}}
 
 ### 4. Search user
 GET {{server_address}}/user/search?first_name=ар&last_name=аб
+
+### 5. Set friend
+PUT {{server_address}}/friend/set/24bb23ad-d50e-471f-8f92-de36d0100807
+
+### 6. Delete friend
+PUT {{server_address}}/friend/delete/24bb23ad-d50e-471f-8f92-de36d0100807
+
+### 7. Create post
+POST {{server_address}}/post/create
+Content-Type: application/json; charset=UTF-8
+
+{
+  "text": "trial"
+}
+
+> {% client.global.set("post_id", response.body.uuid); %}
+
+### 8. Update post
+PUT {{server_address}}/post/update
+Content-Type: application/json; charset=UTF-8
+
+{
+  "id": "{{post_id}}",
+  "text": "upd"
+}
+
+### 9. Delete post
+PUT {{server_address}}/post/delete/{{post_id}}
+
+### 10. Get post
+GET {{server_address}}/post/get/{{post_id}}
+
+### 11. Get feed
+GET {{server_address}}/post/feed?offset=0&limit=100

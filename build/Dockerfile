@@ -11,6 +11,7 @@ RUN apk add --no-cache net-tools
 WORKDIR /go/src/github.com/vstdy/otus-highload
 COPY --from=build /go/src/github.com/vstdy/otus-highload/otus-project .
 COPY ./build/resources/csv/people.csv .
+COPY ./build/resources/txt/posts.txt .
 COPY ./build/entrypoint.sh .
 
 ENTRYPOINT ["sh", "entrypoint.sh"]

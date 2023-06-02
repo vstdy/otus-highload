@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/vstdy/otus-highload/pkg/logging"
+	"github.com/vstdy/otus-highload/provider/cache"
 	"github.com/vstdy/otus-highload/service/project"
 	"github.com/vstdy/otus-highload/storage"
 )
@@ -21,6 +22,7 @@ type (
 	// Service keeps service dependencies.
 	Service struct {
 		storage storage.IStorage
+		cache   cache.ICache
 	}
 
 	// ServiceOption defines functional argument for Service constructor.
@@ -31,6 +33,15 @@ type (
 func WithStorage(st storage.IStorage) ServiceOption {
 	return func(svc *Service) error {
 		svc.storage = st
+
+		return nil
+	}
+}
+
+// WithCache sets IStorage.
+func WithCache(c cache.ICache) ServiceOption {
+	return func(svc *Service) error {
+		svc.cache = c
 
 		return nil
 	}

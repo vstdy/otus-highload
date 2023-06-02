@@ -9,6 +9,7 @@ import (
 	"github.com/vstdy/otus-highload/api/metrics"
 	"github.com/vstdy/otus-highload/api/rest"
 	"github.com/vstdy/otus-highload/pkg"
+	"github.com/vstdy/otus-highload/provider/cache/redis"
 	"github.com/vstdy/otus-highload/service/project/v1"
 	"github.com/vstdy/otus-highload/storage"
 	"github.com/vstdy/otus-highload/storage/psql"
@@ -21,6 +22,7 @@ type Config struct {
 	StorageType       string         `mapstructure:"storage_type"`
 	HTTPServer        rest.Config    `mapstructure:"server,squash"`
 	HTTPMetricsServer metrics.Config `mapstructure:"metrics_server,squash"`
+	Cache             redis.Config   `mapstructure:"cache,squash"`
 	PSQLStorage       psql.Config    `mapstructure:"psql_storage,squash"`
 }
 
@@ -36,12 +38,18 @@ func BuildDefaultConfig() Config {
 		StorageType:       psqlStorage,
 		HTTPServer:        rest.NewDefaultConfig(),
 		HTTPMetricsServer: metrics.NewDefaultConfig(),
+		Cache:             redis.NewDefaultConfig(),
 		PSQLStorage:       psql.NewDefaultConfig(),
 	}
 }
 
 // BuildService builds project.Service dependency.
 func (config Config) BuildService() (*project.Service, error) {
+	cache, err := redis.NewClient(config.Cache)
+	if err != nil {
+		return nil, fmt.Errorf("building cache: %w", err)
+	}
+
 	st, err := config.BuildStorage()
 	if err != nil {
 		return nil, err
@@ -49,6 +57,7 @@ func (config Config) BuildService() (*project.Service, error) {
 
 	svc, err := project.NewService(
 		project.WithStorage(st),
+		project.WithCache(cache),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building service: %w", err)

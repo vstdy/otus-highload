@@ -1,6 +1,11 @@
 package pkg
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
+
+const NotNullViolation = "23502"
 
 var (
 	ErrUnsupportedStorageType = errors.New("unsupported storage type")
@@ -8,3 +13,11 @@ var (
 	ErrNotFound               = errors.New("not found")
 	ErrWrongCredentials       = errors.New("wrong credentials")
 )
+
+type ErrSetFriendInvalidArgs struct {
+	Column string
+}
+
+func (err ErrSetFriendInvalidArgs) Error() string {
+	return fmt.Sprintf("%s not found", err.Column)
+}

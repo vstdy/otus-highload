@@ -16,9 +16,9 @@ type User struct {
 	FirstName  string
 	SecondName string
 	Age        uint8
-	Biography  sql.NullString
+	Biography  string
 	City       string
-	Password   sql.NullString
+	Password   string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  sql.NullTime
@@ -32,9 +32,9 @@ func (u User) ToCanonical() model.User {
 		FirstName:  u.FirstName,
 		SecondName: u.SecondName,
 		Age:        u.Age,
-		Biography:  u.Biography.String,
+		Biography:  u.Biography,
 		City:       u.City,
-		Password:   u.Password.String,
+		Password:   u.Password,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,
 		DeletedAt:  u.DeletedAt.Time,

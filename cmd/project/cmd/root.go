@@ -24,6 +24,7 @@ const (
 	flagTimeout                 = "timeout"
 	flagServerAddress           = "server_address"
 	envSecretKey                = "secret_key"
+	envRedisAddress             = "redis_address"
 	flagDatabaseDSN             = "database_dsn"
 	flagDatabaseAsyncReplicaDSN = "async_replica_dsn"
 )
@@ -122,6 +123,9 @@ func setupConfig(cmd *cobra.Command) error {
 
 	if err := viper.BindEnv(envSecretKey); err != nil {
 		return fmt.Errorf("%s env binding: %w", envSecretKey, err)
+	}
+	if err := viper.BindEnv(envRedisAddress); err != nil {
+		return fmt.Errorf("%s env binding: %w", envRedisAddress, err)
 	}
 
 	configPath := viper.GetString(flagConfigPath)

@@ -6,11 +6,13 @@ require (
 	github.com/georgysavva/scany/v2 v2.0.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/jwtauth/v5 v5.1.0
+	github.com/go-redis/cache/v9 v9.0.0
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/lestrrat-go/jwx/v2 v2.0.6
 	github.com/pressly/goose/v3 v3.10.0
 	github.com/prometheus/client_golang v1.15.0
+	github.com/redis/go-redis/v9 v9.0.5
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.10.1
@@ -21,6 +23,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -29,7 +32,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.0 // indirect
-	github.com/kr/text v0.2.0 // indirect
+	github.com/klauspost/compress v1.16.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
@@ -47,8 +50,10 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/vmihailenco/go-tinylfu v0.2.2 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
