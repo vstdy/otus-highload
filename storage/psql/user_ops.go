@@ -85,7 +85,7 @@ func (st *Storage) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User,
 }
 
 // SearchUsers searches users.
-func (st *Storage) SearchUsers(ctx context.Context, searchParams model.SearchUser) ([]model.User, error) {
+func (st *Storage) SearchUsers(ctx context.Context, firstName, secondName string) ([]model.User, error) {
 	conn := st.masterConn
 	if st.asyncReplicaConn != nil {
 		conn = st.asyncReplicaConn
@@ -99,7 +99,7 @@ func (st *Storage) SearchUsers(ctx context.Context, searchParams model.SearchUse
 			AND deleted_at IS NULL
 		ORDER BY id;
 	`
-	args := []interface{}{searchParams.FirstName, searchParams.LastName}
+	args := []interface{}{firstName, secondName}
 
 	var dbObjs schema.Users
 	err := pgxscan.Select(ctx, conn, &dbObjs, query, args...)

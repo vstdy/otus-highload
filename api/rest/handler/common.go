@@ -10,13 +10,13 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 
-	canonical "github.com/vstdy/otus-highload/model"
+	"github.com/vstdy/otus-highload/model"
 )
 
 const claimsField = "uuid"
 
 // addJWTCookie adds a jwt cookie to the response.
-func (h Handler) addJWTCookie(w http.ResponseWriter, obj canonical.User) error {
+func (h Handler) addJWTCookie(w http.ResponseWriter, obj model.User) error {
 	claims := map[string]interface{}{
 		claimsField: obj.UUID,
 	}
@@ -65,15 +65,15 @@ func (h Handler) getUUIDs(r *http.Request) (uuid.UUID, uuid.UUID, error) {
 
 const defaultPageLimit = 10
 
-func (h Handler) getPageParams(r *http.Request) (canonical.Page, error) {
+func (h Handler) getPageParams(r *http.Request) (model.Page, error) {
 	var err error
-	page := canonical.Page{Limit: defaultPageLimit}
+	page := model.Page{Limit: defaultPageLimit}
 
 	offsetParam := r.URL.Query().Get("offset")
 	if offsetParam != "" {
 		page.Offset, err = strconv.Atoi(offsetParam)
 		if err != nil {
-			return canonical.Page{}, err
+			return model.Page{}, err
 		}
 	}
 
@@ -81,7 +81,7 @@ func (h Handler) getPageParams(r *http.Request) (canonical.Page, error) {
 	if limitParam != "" {
 		page.Limit, err = strconv.Atoi(limitParam)
 		if err != nil {
-			return canonical.Page{}, err
+			return model.Page{}, err
 		}
 	}
 

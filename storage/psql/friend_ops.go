@@ -29,7 +29,7 @@ func (st *Storage) SetFriend(ctx context.Context, userUUID, friendUUID uuid.UUID
 			return err
 		}
 		if pgErr.Code == pkg.NotNullViolation {
-			return pkg.ErrSetFriendInvalidArgs{Column: pgErr.ColumnName}
+			return pkg.ErrInvalidUserArgs{Column: pgErr.ColumnName}
 		}
 	}
 

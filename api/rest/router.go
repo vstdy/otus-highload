@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/vstdy/otus-highload/api/rest/handler"
 	"github.com/vstdy/otus-highload/service/project"
@@ -15,6 +16,8 @@ func NewRouter(svc project.IService, config Config) (chi.Router, error) {
 	jwtAuth := jwtauth.New(jwa.HS256.String(), []byte(config.SecretKey), nil)
 	h := handler.NewHandler(svc, jwtAuth, config.LogLevel)
 	r := chi.NewRouter()
+
+	r.Handle("/metrics", promhttp.Handler())
 
 	r.Route("/", func(r chi.Router) {
 		r.Use(
@@ -57,6 +60,11 @@ func NewRouter(svc project.IService, config Config) (chi.Router, error) {
 				r.Put("/delete/{id}", h.DeletePost)
 				r.Get("/get/{id}", h.GetPost)
 				r.Get("/feed", h.GetFeed)
+			})
+
+			r.Route("/dialog", func(r chi.Router) {
+				r.Post("/{id}/send", h.SendDialog)
+				r.Get("/{id}/list", h.ListDialog)
 			})
 		})
 	})

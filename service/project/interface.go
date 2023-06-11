@@ -16,6 +16,7 @@ type IService interface {
 	IUserService
 	IFriendService
 	IPostService
+	IDialogService
 }
 
 type IUserService interface {
@@ -26,7 +27,7 @@ type IUserService interface {
 	// GetUser returns user data.
 	GetUser(ctx context.Context, userUUID uuid.UUID) (model.User, error)
 	// SearchUsers searches users.
-	SearchUsers(ctx context.Context, searchParams model.SearchUser) ([]model.User, error)
+	SearchUsers(ctx context.Context, firstName, secondName string) ([]model.User, error)
 }
 
 type IFriendService interface {
@@ -47,4 +48,11 @@ type IPostService interface {
 	GetPost(ctx context.Context, postUUID uuid.UUID) (model.PostExt, error)
 	// PostsFeed returns friends' most recent posts.
 	PostsFeed(ctx context.Context, userUUID uuid.UUID, page model.Page) ([]model.PostExt, error)
+}
+
+type IDialogService interface {
+	// SendDialog sends message to dialog.
+	SendDialog(ctx context.Context, from, to uuid.UUID, text string) error
+	// ListDialog returns dialog messages.
+	ListDialog(ctx context.Context, from, to uuid.UUID, page model.Page) ([]model.Dialog, error)
 }

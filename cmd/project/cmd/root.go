@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/vstdy/otus-highload/api/metrics"
 	"github.com/vstdy/otus-highload/api/rest"
 	"github.com/vstdy/otus-highload/cmd/project/cmd/common"
 	"github.com/vstdy/otus-highload/pkg/logging"
@@ -60,21 +59,10 @@ func newRootCmd() *cobra.Command {
 				return fmt.Errorf("app initialization: server building: %w", err)
 			}
 
-			metricsSrv, err := metrics.NewMetricsServer(config.HTTPMetricsServer)
-			if err != nil {
-				return fmt.Errorf("app initialization: metrics server building: %w", err)
-			}
-
 			// Run servers
 			go func() {
 				if err = srv.ListenAndServe(); err != http.ErrServerClosed {
 					logger.Error().Err(err).Msg("HTTP server ListenAndServe")
-				}
-			}()
-
-			go func() {
-				if err = metricsSrv.ListenAndServe(); err != http.ErrServerClosed {
-					logger.Error().Err(err).Msg("metrics HTTP server ListenAndServe")
 				}
 			}()
 
@@ -87,9 +75,6 @@ func newRootCmd() *cobra.Command {
 			defer shutdownCancel()
 			if err = srv.Shutdown(shutdownCtx); err != nil {
 				return fmt.Errorf("server shutdown failed: %w", err)
-			}
-			if err = metricsSrv.Shutdown(shutdownCtx); err != nil {
-				return fmt.Errorf("metrics server shutdown failed: %w", err)
 			}
 
 			if err = svc.Close(); err != nil {

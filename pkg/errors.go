@@ -11,13 +11,14 @@ var (
 	ErrUnsupportedStorageType = errors.New("unsupported storage type")
 	ErrInvalidInput           = errors.New("invalid input")
 	ErrNotFound               = errors.New("not found")
+	ErrUserNotFound           = errors.New("user not found")
 	ErrWrongCredentials       = errors.New("wrong credentials")
 )
 
-type ErrSetFriendInvalidArgs struct {
+type ErrInvalidUserArgs struct {
 	Column string
 }
 
-func (err ErrSetFriendInvalidArgs) Error() string {
-	return fmt.Sprintf("%s not found", err.Column)
+func (err ErrInvalidUserArgs) Error() string {
+	return fmt.Sprintf("'%s' column user not found", err.Column)
 }

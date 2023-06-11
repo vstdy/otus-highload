@@ -55,11 +55,22 @@ Content-Type: application/json; charset=UTF-8
   "text": "upd"
 }
 
-### 9. Delete post
-PUT {{server_address}}/post/delete/{{post_id}}
-
-### 10. Get post
+### 9. Get post
 GET {{server_address}}/post/get/{{post_id}}
 
+### 10. Delete post
+PUT {{server_address}}/post/delete/{{post_id}}
+
 ### 11. Get feed
-GET {{server_address}}/post/feed?offset=0&limit=100
+GET {{server_address}}/post/feed?offset=0&limit=10
+
+### 12. Send dialog
+POST {{server_address}}/dialog/d954d4f4-9e10-463e-9a85-7fec68d9950f/send
+Content-Type: application/json; charset=UTF-8
+
+{
+  "text": "trial"
+}
+
+### 13. List dialog
+GET {{server_address}}/dialog/d954d4f4-9e10-463e-9a85-7fec68d9950f/list?offset=0&limit=10

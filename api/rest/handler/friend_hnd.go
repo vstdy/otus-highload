@@ -17,7 +17,7 @@ func (h Handler) SetFriend(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.SetFriend(r.Context(), userUUID, friendUUID)
 	if err != nil {
-		if errors.As(err, new(pkg.ErrSetFriendInvalidArgs)) {
+		if errors.As(err, new(pkg.ErrInvalidUserArgs)) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

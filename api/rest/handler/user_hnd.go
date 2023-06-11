@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/vstdy/otus-highload/api/rest/model"
-	canonical "github.com/vstdy/otus-highload/model"
 	"github.com/vstdy/otus-highload/pkg"
 )
 
@@ -137,8 +136,7 @@ func (h Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchParams := canonical.SearchUser{FirstName: firstName, LastName: lastName}
-	objs, err := h.service.SearchUsers(r.Context(), searchParams)
+	objs, err := h.service.SearchUsers(r.Context(), firstName, lastName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

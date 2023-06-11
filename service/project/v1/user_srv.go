@@ -55,6 +55,6 @@ func (svc *Service) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User
 }
 
 // SearchUsers searches users.
-func (svc *Service) SearchUsers(ctx context.Context, searchParams model.SearchUser) ([]model.User, error) {
-	return svc.storage.SearchUsers(ctx, searchParams)
+func (svc *Service) SearchUsers(ctx context.Context, firstName, secondName string) ([]model.User, error) {
+	return svc.storage.SearchUsers(ctx, firstName, secondName)
 }

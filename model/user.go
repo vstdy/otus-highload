@@ -77,9 +77,3 @@ func (u User) ValidateAuthentication() error {
 
 	return nil
 }
-
-// SearchUser ...
-type SearchUser struct {
-	FirstName string
-	LastName  string
-}

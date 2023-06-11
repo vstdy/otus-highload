@@ -8,7 +8,6 @@ import (
 
 // Post keeps post data.
 type Post struct {
-	ID        int64
 	UUID      uuid.UUID
 	Text      string
 	AuthorID  int64
