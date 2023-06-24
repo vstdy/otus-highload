@@ -320,7 +320,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\".+pg-.+\",name!~\".+exporter.+\"}[$__rate_interval])) / scalar (machine_cpu_cores) * 100",
+          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\".+pg-.+\",name!~\".+exporter.*\"}[$__rate_interval])) / scalar (machine_cpu_cores) * 100",
           "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
@@ -513,7 +513,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (name) (container_memory_usage_bytes{name=~\".+pg-.+\",name!~\".+exporter.+\"})",
+          "expr": "sum by (name) (container_memory_usage_bytes{name=~\".+pg-.+\",name!~\".+exporter.*\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -603,7 +603,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (name) (container_fs_usage_bytes{name=~\".+pg-.+\",name!~\".+exporter.+\"})",
+          "expr": "sum by (name) (container_fs_usage_bytes{name=~\".+pg-.+\",name!~\".+exporter.*\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"

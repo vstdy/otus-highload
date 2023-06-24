@@ -3,10 +3,10 @@ package redis
 import "fmt"
 
 const (
-	redisAddressDefault = "localhost:6379"
+	defaultRedisAddress = "localhost:6379"
 )
 
-// Config keeps Storage configuration.
+// Config keeps Client configuration.
 type Config struct {
 	RedisAddress string `mapstructure:"redis_address"`
 }
@@ -23,6 +23,6 @@ func (config Config) Validate() error {
 // NewDefaultConfig builds a Config with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		RedisAddress: redisAddressDefault,
+		RedisAddress: defaultRedisAddress,
 	}
 }

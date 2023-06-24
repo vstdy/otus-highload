@@ -6,14 +6,18 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/vstdy/otus-highload/model"
 	"github.com/vstdy/otus-highload/pkg/logging"
+	"github.com/vstdy/otus-highload/provider/broker"
 	"github.com/vstdy/otus-highload/provider/cache"
+	ext_config "github.com/vstdy/otus-highload/provider/config"
 	"github.com/vstdy/otus-highload/service/project"
 	"github.com/vstdy/otus-highload/storage"
 )
 
 const (
-	serviceName = "Project service"
+	serviceName        = "Project service"
+	newPostsNtfJobName = "New posts notifications"
 )
 
 var _ project.IService = (*Service)(nil)
@@ -21,8 +25,11 @@ var _ project.IService = (*Service)(nil)
 type (
 	// Service keeps service dependencies.
 	Service struct {
-		storage storage.IStorage
-		cache   cache.ICache
+		storage   storage.IStorage
+		cache     cache.ICache
+		broker    broker.IBroker
+		extConfig ext_config.IExtConfig
+		hub       chan model.NewPostNtf
 	}
 
 	// ServiceOption defines functional argument for Service constructor.
@@ -38,10 +45,28 @@ func WithStorage(st storage.IStorage) ServiceOption {
 	}
 }
 
-// WithCache sets IStorage.
+// WithCache sets ICache.
 func WithCache(c cache.ICache) ServiceOption {
 	return func(svc *Service) error {
 		svc.cache = c
+
+		return nil
+	}
+}
+
+// WithBroker sets IBroker.
+func WithBroker(b broker.IBroker) ServiceOption {
+	return func(svc *Service) error {
+		svc.broker = b
+
+		return nil
+	}
+}
+
+// WithExtConfig sets IExtConfig.
+func WithExtConfig(c ext_config.IExtConfig) ServiceOption {
+	return func(svc *Service) error {
+		svc.extConfig = c
 
 		return nil
 	}
@@ -60,18 +85,23 @@ func NewService(opts ...ServiceOption) (*Service, error) {
 		return nil, fmt.Errorf("storage: nil")
 	}
 
+	svc.hub = make(chan model.NewPostNtf)
+	go svc.consumeNewPostsNotifications()
+
 	return svc, nil
 }
 
 // Close closes all service dependencies.
 func (svc *Service) Close() error {
-	if svc.storage == nil {
-		return nil
+	if err := svc.broker.Close(); err != nil {
+		return fmt.Errorf("closing broker: %w", err)
 	}
 
 	if err := svc.storage.Close(); err != nil {
 		return fmt.Errorf("closing storage: %w", err)
 	}
+
+	close(svc.hub)
 
 	return nil
 }
@@ -82,4 +112,8 @@ func (svc *Service) Logger(ctx context.Context) *zerolog.Logger {
 	logger = logger.With().Str(logging.ServiceKey, serviceName).Logger()
 
 	return &logger
+}
+
+func (svc *Service) GetHub() chan model.NewPostNtf {
+	return svc.hub
 }

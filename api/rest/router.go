@@ -4,17 +4,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/gorilla/websocket"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/vstdy/otus-highload/api/rest/handler"
+	"github.com/vstdy/otus-highload/api/rest/hub"
 	"github.com/vstdy/otus-highload/service/project"
 )
 
 // NewRouter returns router.
-func NewRouter(svc project.IService, config Config) (chi.Router, error) {
+func NewRouter(svc project.IService, hub *hub.Hub, config Config) (chi.Router, error) {
+	upgrader := websocket.Upgrader{}
 	jwtAuth := jwtauth.New(jwa.HS256.String(), []byte(config.SecretKey), nil)
-	h := handler.NewHandler(svc, jwtAuth, config.LogLevel)
+	h := handler.NewHandler(svc, upgrader, jwtAuth, config.LogLevel, hub)
 	r := chi.NewRouter()
 
 	r.Handle("/metrics", promhttp.Handler())
@@ -68,6 +71,9 @@ func NewRouter(svc project.IService, config Config) (chi.Router, error) {
 			})
 		})
 	})
+
+	r.With(jwtauth.Verifier(jwtAuth), jwtauth.Authenticator).
+		HandleFunc("/post/feed/posted", h.GetPostedFeed)
 
 	return r, nil
 }

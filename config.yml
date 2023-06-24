@@ -2,7 +2,7 @@
 
 # PostgreSQL storage configuration
 # Connection URL
-DATABASE_DSN:
+DATABASE_URL:
   "postgres://user:password@localhost:5432/project?sslmode=disable"
 
 # Log level

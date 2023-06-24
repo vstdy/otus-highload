@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 
@@ -55,4 +56,23 @@ func (st *Storage) DeleteFriend(ctx context.Context, userUUID, friendUUID uuid.U
 	}
 
 	return err
+}
+
+// GetFriendSetters returns users who added given user to friends.
+func (st *Storage) GetFriendSetters(ctx context.Context, friendID int64) ([]uuid.UUID, error) {
+	query := `
+		SELECT u.uuid
+		FROM friend f
+		INNER JOIN "user" u on u.id = f.user_id
+		WHERE friend_id = $1;
+	`
+	args := []interface{}{friendID}
+
+	var users []uuid.UUID
+	err := pgxscan.Select(ctx, st.masterConn, &users, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

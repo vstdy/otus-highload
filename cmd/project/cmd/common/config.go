@@ -8,7 +8,9 @@ import (
 
 	"github.com/vstdy/otus-highload/api/rest"
 	"github.com/vstdy/otus-highload/pkg"
+	"github.com/vstdy/otus-highload/provider/broker/rabbitmq"
 	"github.com/vstdy/otus-highload/provider/cache/redis"
+	"github.com/vstdy/otus-highload/provider/config/etcd"
 	"github.com/vstdy/otus-highload/service/project/v1"
 	"github.com/vstdy/otus-highload/storage"
 	"github.com/vstdy/otus-highload/storage/psql"
@@ -16,12 +18,14 @@ import (
 
 // Config combines sub-configs for all services, storages and providers.
 type Config struct {
-	Timeout     time.Duration `mapstructure:"timeout"`
-	LogLevel    zerolog.Level `mapstructure:"-"`
-	StorageType string        `mapstructure:"storage_type"`
-	HTTPServer  rest.Config   `mapstructure:"server,squash"`
-	Cache       redis.Config  `mapstructure:"cache,squash"`
-	PSQLStorage psql.Config   `mapstructure:"psql_storage,squash"`
+	Timeout     time.Duration   `mapstructure:"timeout"`
+	LogLevel    zerolog.Level   `mapstructure:"-"`
+	StorageType string          `mapstructure:"storage_type"`
+	HTTPServer  rest.Config     `mapstructure:"server,squash"`
+	Cache       redis.Config    `mapstructure:"cache,squash"`
+	Broker      rabbitmq.Config `mapstructure:"broker,squash"`
+	ExtConfig   etcd.Config     `mapstructure:"ext_config,squash"`
+	PSQLStorage psql.Config     `mapstructure:"psql_storage,squash"`
 }
 
 const (
@@ -36,6 +40,8 @@ func BuildDefaultConfig() Config {
 		StorageType: psqlStorage,
 		HTTPServer:  rest.NewDefaultConfig(),
 		Cache:       redis.NewDefaultConfig(),
+		Broker:      rabbitmq.NewDefaultConfig(),
+		ExtConfig:   etcd.NewDefaultConfig(),
 		PSQLStorage: psql.NewDefaultConfig(),
 	}
 }
@@ -47,6 +53,16 @@ func (config Config) BuildService() (*project.Service, error) {
 		return nil, fmt.Errorf("building cache: %w", err)
 	}
 
+	broker, err := rabbitmq.NewClient(config.Broker)
+	if err != nil {
+		return nil, fmt.Errorf("building broker: %w", err)
+	}
+
+	extConfig, err := etcd.NewClient(config.ExtConfig)
+	if err != nil {
+		return nil, fmt.Errorf("building ext_config: %w", err)
+	}
+
 	st, err := config.BuildStorage()
 	if err != nil {
 		return nil, err
@@ -55,6 +71,8 @@ func (config Config) BuildService() (*project.Service, error) {
 	svc, err := project.NewService(
 		project.WithStorage(st),
 		project.WithCache(cache),
+		project.WithBroker(broker),
+		project.WithExtConfig(extConfig),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building service: %w", err)

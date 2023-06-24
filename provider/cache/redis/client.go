@@ -33,10 +33,14 @@ func (c *Client) Set(item *cache.Item) error {
 	return c.cache.Set(item)
 }
 
+func (c *Client) Once(item *cache.Item) error {
+	return c.cache.Once(item)
+}
+
 func (c *Client) Get(ctx context.Context, key string, value interface{}) error {
 	return c.cache.Get(ctx, key, value)
 }
 
-func (c *Client) Once(item *cache.Item) error {
-	return c.cache.Once(item)
+func (c *Client) Delete(ctx context.Context, key string) error {
+	return c.cache.Delete(ctx, key)
 }

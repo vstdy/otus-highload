@@ -1,4 +1,5 @@
 -- +goose Up
+-- Chat table
 CREATE TABLE "chat"
 (
     "uuid"          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -7,7 +8,7 @@ CREATE TABLE "chat"
 );
 
 CREATE INDEX "chat_participants_index" ON "chat" USING btree (participant_1, participant_2);
-SELECT create_distributed_table('chat', 'uuid', shard_count := 8);
+SELECT create_distributed_table('chat', 'uuid', shard_count := 15);
 
 -- Dialog table
 CREATE TABLE "dialog"

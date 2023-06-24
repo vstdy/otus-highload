@@ -16,29 +16,29 @@ import (
 const postTableName = "post"
 
 // CreatePost creates post.
-func (st *Storage) CreatePost(ctx context.Context, userUUID uuid.UUID, text string) (uuid.UUID, error) {
+func (st *Storage) CreatePost(ctx context.Context, userUUID uuid.UUID, text string) (model.Post, error) {
 	query := `
 		INSERT INTO "post" (author_id, text)
 		VALUES ((SELECT id FROM "user" WHERE uuid = $1 AND deleted_at IS NULL), $2)
-		RETURNING uuid;
+		RETURNING *;
 	`
 	args := []interface{}{userUUID, text}
 
-	var postUUID uuid.UUID
-	err := pgxscan.Get(ctx, st.masterConn, &postUUID, query, args...)
+	var post model.Post
+	err := pgxscan.Get(ctx, st.masterConn, &post, query, args...)
 	if err != nil {
 		pgErr := new(pgconn.PgError)
 		if !errors.As(err, &pgErr) {
-			return uuid.Nil, err
+			return model.Post{}, err
 		}
 		if pgErr.Code == pkg.NotNullViolation {
-			return uuid.Nil, pkg.ErrWrongCredentials
+			return model.Post{}, pkg.ErrWrongCredentials
 		}
 
-		return uuid.Nil, err
+		return model.Post{}, err
 	}
 
-	return postUUID, nil
+	return post, nil
 }
 
 // UpdatePost updates post.

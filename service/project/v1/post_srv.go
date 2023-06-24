@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,8 +14,9 @@ import (
 )
 
 const (
-	defaultFeedCacheSize = 1000
-	defaultFeedCacheTTL  = time.Minute
+	defaultFeedCacheSize   = 1000
+	defaultFeedCacheTTL    = time.Minute
+	noCacheUsersConfigName = "no_cache_users"
 )
 
 // CreatePost creates post.
@@ -23,7 +25,16 @@ func (svc *Service) CreatePost(ctx context.Context, userUUID uuid.UUID, text str
 		return uuid.Nil, fmt.Errorf("%w: text is empty", pkg.ErrInvalidInput)
 	}
 
-	return svc.storage.CreatePost(ctx, userUUID, text)
+	post, err := svc.storage.CreatePost(ctx, userUUID, text)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	go svc.invalidateCache(post.AuthorID)
+
+	go svc.publishNewPostNtf(post.ToPostExt(userUUID))
+
+	return post.UUID, nil
 }
 
 // UpdatePost updates post.
@@ -61,7 +72,7 @@ func (svc *Service) getFeedFromCache(ctx context.Context, userUUID uuid.UUID, pa
 	err := svc.cache.Once(&cache.Item{
 		Key:   userUUID.String(),
 		Value: &posts,
-		TTL:   defaultFeedCacheTTL,
+		TTL:   defaultFeedCacheTTL * 2,
 		Do: func(*cache.Item) (interface{}, error) {
 			return svc.storage.PostsFeed(ctx, userUUID, model.Page{Offset: 0, Limit: defaultFeedCacheSize})
 		},
@@ -77,4 +88,54 @@ func (svc *Service) getFeedFromCache(ctx context.Context, userUUID uuid.UUID, pa
 		return posts[page.Offset:], nil
 	}
 	return posts[page.Offset : page.Offset+page.Limit], nil
+}
+
+func (svc *Service) invalidateCache(userID int64) {
+	response, err := svc.extConfig.Get(context.Background(), noCacheUsersConfigName)
+	if err != nil {
+		svc.Logger(nil).Warn().Err(err)
+		return
+	}
+
+	if len(response.Kvs) == 0 {
+		return
+	}
+
+	var noCacheUsers []int64
+	err = json.Unmarshal(response.Kvs[0].Value, &noCacheUsers)
+	if err != nil {
+		svc.Logger(nil).Warn().Err(err).Msgf("unmarshal %s", noCacheUsersConfigName)
+		return
+	}
+
+	for _, noCacheUser := range noCacheUsers {
+		if userID != noCacheUser {
+			continue
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		setters, err := svc.storage.GetFriendSetters(ctx, userID)
+		cancel()
+
+		for _, u := range setters {
+			err = svc.cache.Delete(context.Background(), u.String())
+			if err != nil {
+				svc.Logger(nil).Warn().Err(err)
+			}
+		}
+
+		return
+	}
+}
+
+func (svc *Service) publishNewPostNtf(post model.PostExt) {
+	marshal, err := json.Marshal(post)
+	if err != nil {
+		svc.Logger(nil).Warn().Err(err)
+	}
+
+	err = svc.broker.Publish(marshal)
+	if err != nil {
+		svc.Logger(nil).Warn().Err(err)
+	}
 }

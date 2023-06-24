@@ -56,11 +56,13 @@ type IFriendStorage interface {
 	SetFriend(ctx context.Context, userUUID, friendUUID uuid.UUID) error
 	// DeleteFriend deletes user's friend.
 	DeleteFriend(ctx context.Context, userUUID, friendUUID uuid.UUID) error
+	// GetFriendSetters returns users who added given user to friends.
+	GetFriendSetters(ctx context.Context, friendID int64) ([]uuid.UUID, error)
 }
 
 type IPostStorage interface {
 	// CreatePost creates post.
-	CreatePost(ctx context.Context, userUUID uuid.UUID, text string) (uuid.UUID, error)
+	CreatePost(ctx context.Context, userUUID uuid.UUID, text string) (model.Post, error)
 	// UpdatePost updates post.
 	UpdatePost(ctx context.Context, userUUID uuid.UUID, post model.Post) error
 	// DeletePost deletes post.

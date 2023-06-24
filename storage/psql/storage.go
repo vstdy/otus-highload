@@ -60,16 +60,16 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 
 	ctx := context.Background()
 
-	masterConn, err := pgxpool.New(ctx, st.config.DSN)
+	masterConn, err := pgxpool.New(ctx, st.config.URL)
 	if err != nil {
-		return nil, fmt.Errorf("connection for DSN (%s) failed: %w", st.config.DSN, err)
+		return nil, fmt.Errorf("connection for URL (%s) failed: %w", st.config.URL, err)
 	}
 
 	var asyncReplicaConn *pgxpool.Pool
-	if st.config.AsyncReplicaDSN != "" {
-		asyncReplicaConn, err = pgxpool.New(ctx, st.config.AsyncReplicaDSN)
+	if st.config.AsyncReplicaURL != "" {
+		asyncReplicaConn, err = pgxpool.New(ctx, st.config.AsyncReplicaURL)
 		if err != nil {
-			return nil, fmt.Errorf("connection for DSN (%s) failed: %w", st.config.DSN, err)
+			return nil, fmt.Errorf("connection for URL (%s) failed: %w", st.config.URL, err)
 		}
 	}
 
@@ -77,7 +77,7 @@ func NewStorage(opts ...StorageOption) (*Storage, error) {
 	st.asyncReplicaConn = asyncReplicaConn
 
 	if err = st.masterConn.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("ping for DSN (%s) failed: %w", st.config.DSN, err)
+		return nil, fmt.Errorf("ping for URL (%s) failed: %w", st.config.URL, err)
 	}
 
 	return st, nil
@@ -96,9 +96,9 @@ func (st *Storage) Close() error {
 
 // MigrateUp applies all available migrations.
 func (st *Storage) MigrateUp() error {
-	db, err := sql.Open("pgx", st.config.DSN)
+	db, err := sql.Open("pgx", st.config.URL)
 	if err != nil {
-		return fmt.Errorf("connection for DSN (%s) failed: %w", st.config.DSN, err)
+		return fmt.Errorf("connection for URL (%s) failed: %w", st.config.URL, err)
 	}
 	defer db.Close()
 
@@ -115,9 +115,9 @@ func (st *Storage) MigrateUp() error {
 
 // MigrateDown rolls back a single migration from the current version.
 func (st *Storage) MigrateDown() error {
-	db, err := sql.Open("pgx", st.config.DSN)
+	db, err := sql.Open("pgx", st.config.URL)
 	if err != nil {
-		return fmt.Errorf("connection for DSN (%s) failed: %w", st.config.DSN, err)
+		return fmt.Errorf("connection for URL (%s) failed: %w", st.config.URL, err)
 	}
 	defer db.Close()
 

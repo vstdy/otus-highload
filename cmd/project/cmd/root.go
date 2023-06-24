@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/vstdy/otus-highload/api/rest"
+	"github.com/vstdy/otus-highload/api/rest/hub"
 	"github.com/vstdy/otus-highload/cmd/project/cmd/common"
 	"github.com/vstdy/otus-highload/pkg/logging"
 )
@@ -22,10 +24,13 @@ const (
 	flagLogLevel                = "log_level"
 	flagTimeout                 = "timeout"
 	flagServerAddress           = "server_address"
-	envSecretKey                = "secret_key"
-	envRedisAddress             = "redis_address"
-	flagDatabaseDSN             = "database_dsn"
-	flagDatabaseAsyncReplicaDSN = "async_replica_dsn"
+	flagDatabaseURL             = "database_url"
+	flagDatabaseAsyncReplicaURL = "async_replica_url"
+
+	envSecretKey     = "secret_key"
+	envRedisAddress  = "redis_address"
+	envRabbitmqURL   = "rabbitmq_url"
+	envEtcdEndpoints = "etcd_endpoints"
 )
 
 // Execute prepares cobra.Command context and executes root cmd.
@@ -54,14 +59,16 @@ func newRootCmd() *cobra.Command {
 				return fmt.Errorf("app initialization: service building: %w", err)
 			}
 
-			srv, err := rest.NewServer(svc, config.HTTPServer)
+			hub := hub.NewHub()
+
+			srv, err := rest.NewServer(svc, hub, config.HTTPServer)
 			if err != nil {
 				return fmt.Errorf("app initialization: server building: %w", err)
 			}
 
 			// Run servers
 			go func() {
-				if err = srv.ListenAndServe(); err != http.ErrServerClosed {
+				if err = srv.ListenAndServe(); !errors.Is(http.ErrServerClosed, err) {
 					logger.Error().Err(err).Msg("HTTP server ListenAndServe")
 				}
 			}()
@@ -82,6 +89,8 @@ func newRootCmd() *cobra.Command {
 			}
 			logger.Info().Msg("server stopped")
 
+			hub.Close()
+
 			return nil
 		},
 	}
@@ -90,8 +99,8 @@ func newRootCmd() *cobra.Command {
 	cmd.PersistentFlags().String(flagConfigPath, "./config.yml", "Config file path")
 	cmd.PersistentFlags().StringP(flagLogLevel, "l", config.LogLevel.String(), "Logger level [debug,info,warn,error,fatal]")
 	cmd.PersistentFlags().Duration(flagTimeout, config.Timeout, "Request timeout")
-	cmd.PersistentFlags().StringP(flagDatabaseDSN, "d", config.PSQLStorage.DSN, "Database source name")
-	cmd.PersistentFlags().StringP(flagDatabaseAsyncReplicaDSN, "r", config.PSQLStorage.AsyncReplicaDSN, "Database source name")
+	cmd.PersistentFlags().StringP(flagDatabaseURL, "d", config.PSQLStorage.URL, "Database source name")
+	cmd.PersistentFlags().StringP(flagDatabaseAsyncReplicaURL, "r", config.PSQLStorage.AsyncReplicaURL, "Database source name")
 	cmd.Flags().StringP(flagServerAddress, "a", config.HTTPServer.ServerAddress, "Server address")
 
 	cmd.AddCommand(newMigrateCmd())
@@ -111,6 +120,12 @@ func setupConfig(cmd *cobra.Command) error {
 	}
 	if err := viper.BindEnv(envRedisAddress); err != nil {
 		return fmt.Errorf("%s env binding: %w", envRedisAddress, err)
+	}
+	if err := viper.BindEnv(envRabbitmqURL); err != nil {
+		return fmt.Errorf("%s env binding: %w", envRabbitmqURL, err)
+	}
+	if err := viper.BindEnv(envEtcdEndpoints); err != nil {
+		return fmt.Errorf("%s env binding: %w", envEtcdEndpoints, err)
 	}
 
 	configPath := viper.GetString(flagConfigPath)

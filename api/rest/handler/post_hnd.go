@@ -5,6 +5,10 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/gorilla/websocket"
+	"github.com/rs/zerolog"
+
+	"github.com/vstdy/otus-highload/api/rest/hub"
 	"github.com/vstdy/otus-highload/api/rest/model"
 	"github.com/vstdy/otus-highload/pkg"
 )
@@ -160,5 +164,67 @@ func (h Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	if _, err = w.Write(res); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+// GetPostedFeed returns friends most recent posts.
+func (h Handler) GetPostedFeed(w http.ResponseWriter, r *http.Request) {
+	ctx, logger := h.Logger(r.Context())
+
+	conn, err := h.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Warn().Err(err).Msg("upgrade")
+		return
+	}
+
+	userUUID, err := h.getUserUUID(ctx)
+	if err != nil {
+		logger.Warn().Err(err).Msg("get user uuid")
+		return
+	}
+
+	send := make(chan []byte)
+	cnt := &hub.Connect{
+		Conn: conn,
+		Send: send,
+		User: userUUID.String(),
+	}
+	h.hub.Register <- cnt
+
+	go h.readWS(cnt, logger)
+	go h.writeWS(cnt, logger)
+}
+
+func (h Handler) readWS(cnt *hub.Connect, logger zerolog.Logger) {
+	defer cnt.Conn.Close()
+
+	for {
+		_, _, err := cnt.Conn.NextReader()
+		if err == nil {
+			continue
+		}
+		if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure) {
+			logger.Warn().Err(err).Msg("ws closing connection error")
+		}
+		h.hub.Unregister <- cnt
+		return
+	}
+}
+
+func (h Handler) writeWS(cnt *hub.Connect, logger zerolog.Logger) {
+	defer cnt.Conn.Close()
+
+	for {
+		select {
+		case message, ok := <-cnt.Send:
+			if !ok {
+				return
+			}
+
+			err := cnt.Conn.WriteMessage(websocket.TextMessage, message)
+			if err != nil {
+				logger.Warn().Err(err).Msg("write message")
+			}
+		}
 	}
 }

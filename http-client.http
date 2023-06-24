@@ -1,5 +1,5 @@
 ### 1. Register user
-POST {{server_address}}/user/register
+POST {{http_server_address}}/user/register
 Content-Type: application/json; charset=UTF-8
 
 {
@@ -14,7 +14,7 @@ Content-Type: application/json; charset=UTF-8
 > {% client.global.set("user_id", response.body.user_id); %}
 
 ### 2. Login user
-POST {{server_address}}/login
+POST {{http_server_address}}/login
 Content-Type: application/json; charset=UTF-8
 
 {
@@ -25,19 +25,19 @@ Content-Type: application/json; charset=UTF-8
 > {% client.global.set("user_id", response.body.token); %}
 
 ### 3. Get user
-GET {{server_address}}/user/get/{{user_id}}
+GET {{http_server_address}}/user/get/{{user_id}}
 
 ### 4. Search user
-GET {{server_address}}/user/search?first_name=ар&last_name=аб
+GET {{http_server_address}}/user/search?first_name=ар&last_name=аб
 
 ### 5. Set friend
-PUT {{server_address}}/friend/set/24bb23ad-d50e-471f-8f92-de36d0100807
+PUT {{http_server_address}}/friend/set/24bb23ad-d50e-471f-8f92-de36d0100807
 
 ### 6. Delete friend
-PUT {{server_address}}/friend/delete/24bb23ad-d50e-471f-8f92-de36d0100807
+PUT {{http_server_address}}/friend/delete/24bb23ad-d50e-471f-8f92-de36d0100807
 
 ### 7. Create post
-POST {{server_address}}/post/create
+POST {{http_server_address}}/post/create
 Content-Type: application/json; charset=UTF-8
 
 {
@@ -47,7 +47,7 @@ Content-Type: application/json; charset=UTF-8
 > {% client.global.set("post_id", response.body.uuid); %}
 
 ### 8. Update post
-PUT {{server_address}}/post/update
+PUT {{http_server_address}}/post/update
 Content-Type: application/json; charset=UTF-8
 
 {
@@ -56,21 +56,33 @@ Content-Type: application/json; charset=UTF-8
 }
 
 ### 9. Get post
-GET {{server_address}}/post/get/{{post_id}}
+GET {{http_server_address}}/post/get/{{post_id}}
 
 ### 10. Delete post
-PUT {{server_address}}/post/delete/{{post_id}}
+PUT {{http_server_address}}/post/delete/{{post_id}}
 
 ### 11. Get feed
-GET {{server_address}}/post/feed?offset=0&limit=10
+GET {{http_server_address}}/post/feed?offset=0&limit=10
 
-### 12. Send dialog
-POST {{server_address}}/dialog/d954d4f4-9e10-463e-9a85-7fec68d9950f/send
+### 12.1 Subscribe to feed
+WEBSOCKET {{ws_server_address}}/post/feed/posted
+Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiZjI0MzAzYTAtODYzNi00NjBlLTk5ZTQtYTZmNmRkMmViNWM5In0.YthHcrNrKj7QhI4kBwkmQa_cJukdDB4ajhSqYZQHNPY
+
+### 12.2 Subscribe to feed
+WEBSOCKET {{ws_server_address}}/post/feed/posted
+Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiZjI0MzAzYTAtODYzNi00NjBlLTk5ZTQtYTZmNmRkMmViNWM5In0.YthHcrNrKj7QhI4kBwkmQa_cJukdDB4ajhSqYZQHNPY
+
+### 12.3 Subscribe to feed
+WEBSOCKET {{ws_server_address}}/post/feed/posted
+Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMjUyMjQ1YTgtNDBkOC00OTFlLWE5NmUtZjhhNTZiYmMwYzYxIn0.8U_XPk0wUym6IvVOLb8EVRgfgGMoOrO-vmjVfPuyr-E
+
+### 13. Send dialog
+POST {{http_server_address}}/dialog/d954d4f4-9e10-463e-9a85-7fec68d9950f/send
 Content-Type: application/json; charset=UTF-8
 
 {
   "text": "trial"
 }
 
-### 13. List dialog
-GET {{server_address}}/dialog/d954d4f4-9e10-463e-9a85-7fec68d9950f/list?offset=0&limit=10
+### 14. List dialog
+GET {{http_server_address}}/dialog/d954d4f4-9e10-463e-9a85-7fec68d9950f/list?offset=0&limit=10

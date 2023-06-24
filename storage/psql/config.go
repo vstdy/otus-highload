@@ -3,19 +3,19 @@ package psql
 import "fmt"
 
 const (
-	defaultConfigEndpoint = "postgres://user:password@localhost:5432/project?sslmode=disable"
+	defaultURL = "postgres://user:password@localhost:5432/project?sslmode=disable"
 )
 
 // Config keeps Storage configuration.
 type Config struct {
-	DSN             string `mapstructure:"database_dsn"`
-	AsyncReplicaDSN string `mapstructure:"async_replica_dsn"`
+	URL             string `mapstructure:"database_url"`
+	AsyncReplicaURL string `mapstructure:"async_replica_url"`
 }
 
 // Validate performs a basic validation.
 func (config Config) Validate() error {
-	if config.DSN == "" {
-		return fmt.Errorf("%s field: empty", "DSN")
+	if config.URL == "" {
+		return fmt.Errorf("%s field: empty", "URL")
 	}
 
 	return nil
@@ -24,7 +24,7 @@ func (config Config) Validate() error {
 // NewDefaultConfig builds a Config with default values.
 func NewDefaultConfig() Config {
 	return Config{
-		DSN:             defaultConfigEndpoint,
-		AsyncReplicaDSN: "",
+		URL:             defaultURL,
+		AsyncReplicaURL: "",
 	}
 }

@@ -17,6 +17,8 @@ type IService interface {
 	IFriendService
 	IPostService
 	IDialogService
+
+	GetHub() chan model.NewPostNtf
 }
 
 type IUserService interface {

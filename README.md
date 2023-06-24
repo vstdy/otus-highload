@@ -38,7 +38,7 @@ All CLI commands have the following flags:
 - `--log_level`: (optional) logging level (default: `info`);
 - `--config`: (optional) path to configuration file (default: `./config.yaml`);
 - `--timeout`: (optional) request timeout (default: `5s`);
-- `-d --database_dsn`: (optional) database source name (default: `postgres://user:password@localhost:5432/project?sslmode=disable`);
+- `-d --database_url`: (optional) database source name (default: `postgres://user:password@localhost:5432/project?sslmode=disable`);
 
 Root only command flags:
 - `-a --server_address`: (optional) server address (default: `0.0.0.0:8080`);
