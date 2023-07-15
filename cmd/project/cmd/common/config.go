@@ -14,18 +14,20 @@ import (
 	"github.com/vstdy/otus-highload/service/project/v1"
 	"github.com/vstdy/otus-highload/storage"
 	"github.com/vstdy/otus-highload/storage/psql"
+	"github.com/vstdy/otus-highload/storage/tarantool"
 )
 
 // Config combines sub-configs for all services, storages and providers.
 type Config struct {
-	Timeout     time.Duration   `mapstructure:"timeout"`
-	LogLevel    zerolog.Level   `mapstructure:"-"`
-	StorageType string          `mapstructure:"storage_type"`
-	HTTPServer  rest.Config     `mapstructure:"server,squash"`
-	Cache       redis.Config    `mapstructure:"cache,squash"`
-	Broker      rabbitmq.Config `mapstructure:"broker,squash"`
-	ExtConfig   etcd.Config     `mapstructure:"ext_config,squash"`
-	PSQLStorage psql.Config     `mapstructure:"psql_storage,squash"`
+	Timeout          time.Duration    `mapstructure:"timeout"`
+	LogLevel         zerolog.Level    `mapstructure:"-"`
+	StorageType      string           `mapstructure:"storage_type"`
+	HTTPServer       rest.Config      `mapstructure:"server,squash"`
+	Cache            redis.Config     `mapstructure:"cache,squash"`
+	Broker           rabbitmq.Config  `mapstructure:"broker,squash"`
+	ExtConfig        etcd.Config      `mapstructure:"ext_config,squash"`
+	PSQLStorage      psql.Config      `mapstructure:"psql_storage,squash"`
+	TarantoolStorage tarantool.Config `mapstructure:"tarantool_storage,squash"`
 }
 
 const (
@@ -35,14 +37,15 @@ const (
 // BuildDefaultConfig builds a Config with default values.
 func BuildDefaultConfig() Config {
 	return Config{
-		Timeout:     5 * time.Second,
-		LogLevel:    zerolog.InfoLevel,
-		StorageType: psqlStorage,
-		HTTPServer:  rest.NewDefaultConfig(),
-		Cache:       redis.NewDefaultConfig(),
-		Broker:      rabbitmq.NewDefaultConfig(),
-		ExtConfig:   etcd.NewDefaultConfig(),
-		PSQLStorage: psql.NewDefaultConfig(),
+		Timeout:          5 * time.Second,
+		LogLevel:         zerolog.InfoLevel,
+		StorageType:      psqlStorage,
+		HTTPServer:       rest.NewDefaultConfig(),
+		Cache:            redis.NewDefaultConfig(),
+		Broker:           rabbitmq.NewDefaultConfig(),
+		ExtConfig:        etcd.NewDefaultConfig(),
+		PSQLStorage:      psql.NewDefaultConfig(),
+		TarantoolStorage: tarantool.NewDefaultConfig(),
 	}
 }
 
@@ -68,8 +71,14 @@ func (config Config) BuildService() (*project.Service, error) {
 		return nil, err
 	}
 
+	tr, err := tarantool.NewStorage(tarantool.WithConfig(config.TarantoolStorage))
+	if err != nil {
+		return nil, fmt.Errorf("building tarantool storage: %w", err)
+	}
+
 	svc, err := project.NewService(
 		project.WithStorage(st),
+		project.WithMessageStorage(tr),
 		project.WithCache(cache),
 		project.WithBroker(broker),
 		project.WithExtConfig(extConfig),

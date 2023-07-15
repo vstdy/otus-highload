@@ -17,20 +17,36 @@ func (svc *Service) SendDialog(ctx context.Context, from, to uuid.UUID, text str
 		return fmt.Errorf("%w: text is empty", pkg.ErrInvalidInput)
 	}
 
-	chatID, err := svc.storage.GetChat(ctx, from, to)
+	users, err := svc.storage.GetUsers(ctx, []uuid.UUID{from, to})
+	if err != nil {
+		return err
+	}
+	if len(users) != 2 {
+		return pkg.ErrUserNotFound
+	}
+
+	chatID, err := svc.msgStorage.GetChat(ctx, users[0].ID, users[1].ID)
 	if errors.Is(err, pkg.ErrNotFound) {
-		chatID, err = svc.storage.AddChat(ctx, from, to)
+		chatID, err = svc.msgStorage.AddChat(ctx, users[0].ID, users[1].ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	return svc.storage.SendDialog(ctx, chatID, from, to, text)
+	return svc.msgStorage.SendDialog(ctx, chatID, from, to, text)
 }
 
 // ListDialog returns dialog messages.
 func (svc *Service) ListDialog(ctx context.Context, from, to uuid.UUID, page model.Page) ([]model.Dialog, error) {
-	chatID, err := svc.storage.GetChat(ctx, from, to)
+	users, err := svc.storage.GetUsers(ctx, []uuid.UUID{from, to})
+	if err != nil {
+		return nil, err
+	}
+	if len(users) != 2 {
+		return nil, pkg.ErrUserNotFound
+	}
+
+	chatID, err := svc.msgStorage.GetChat(ctx, users[0].ID, users[1].ID)
 	if errors.Is(err, pkg.ErrNotFound) {
 		return nil, nil
 	}
@@ -38,5 +54,5 @@ func (svc *Service) ListDialog(ctx context.Context, from, to uuid.UUID, page mod
 		return nil, err
 	}
 
-	return svc.storage.ListDialog(ctx, chatID, page)
+	return svc.msgStorage.ListDialog(ctx, chatID, page)
 }

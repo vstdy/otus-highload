@@ -25,11 +25,12 @@ var _ project.IService = (*Service)(nil)
 type (
 	// Service keeps service dependencies.
 	Service struct {
-		storage   storage.IStorage
-		cache     cache.ICache
-		broker    broker.IBroker
-		extConfig ext_config.IExtConfig
-		hub       chan model.NewPostNtf
+		storage    storage.IStorage
+		msgStorage storage.IMessageStorage
+		cache      cache.ICache
+		broker     broker.IBroker
+		extConfig  ext_config.IExtConfig
+		hub        chan model.NewPostNtf
 	}
 
 	// ServiceOption defines functional argument for Service constructor.
@@ -40,6 +41,15 @@ type (
 func WithStorage(st storage.IStorage) ServiceOption {
 	return func(svc *Service) error {
 		svc.storage = st
+
+		return nil
+	}
+}
+
+// WithMessageStorage sets IMessageStorage.
+func WithMessageStorage(st storage.IMessageStorage) ServiceOption {
+	return func(svc *Service) error {
+		svc.msgStorage = st
 
 		return nil
 	}

@@ -56,8 +56,8 @@ func (st *Storage) AuthenticateUser(ctx context.Context, rawObj model.User) (mod
 	return dbObj.ToCanonical(), nil
 }
 
-// GetUser returns user data.
-func (st *Storage) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User, error) {
+// GetUsers returns users data.
+func (st *Storage) GetUsers(ctx context.Context, userUUIDs []uuid.UUID) ([]model.User, error) {
 	conn := st.masterConn
 	if st.asyncReplicaConn != nil {
 		conn = st.asyncReplicaConn
@@ -66,22 +66,18 @@ func (st *Storage) GetUser(ctx context.Context, userUUID uuid.UUID) (model.User,
 	query := `
 		SELECT *
 		FROM "user"
-		WHERE uuid = $1
-			AND deleted_at IS NULL;
+		WHERE uuid = ANY ($1)
+			AND deleted_at IS NULL
+		ORDER BY id;
 	`
-	args := []interface{}{userUUID}
 
-	var dbObj schema.User
-	err := pgxscan.Get(ctx, conn, &dbObj, query, args...)
+	var dbObjs schema.Users
+	err := pgxscan.Select(ctx, conn, &dbObjs, query, userUUIDs)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return model.User{}, pkg.ErrNotFound
-		}
-
-		return model.User{}, err
+		return nil, err
 	}
 
-	return dbObj.ToCanonical(), nil
+	return dbObjs.ToCanonical(), nil
 }
 
 // SearchUsers searches users.

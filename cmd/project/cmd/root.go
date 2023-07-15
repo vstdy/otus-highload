@@ -27,10 +27,11 @@ const (
 	flagDatabaseURL             = "database_url"
 	flagDatabaseAsyncReplicaURL = "async_replica_url"
 
-	envSecretKey     = "secret_key"
-	envRedisAddress  = "redis_address"
-	envRabbitmqURL   = "rabbitmq_url"
-	envEtcdEndpoints = "etcd_endpoints"
+	envSecretKey        = "secret_key"
+	envTarantoolAddress = "tarantool_address"
+	envRedisAddress     = "redis_address"
+	envRabbitmqURL      = "rabbitmq_url"
+	envEtcdEndpoints    = "etcd_endpoints"
 )
 
 // Execute prepares cobra.Command context and executes root cmd.
@@ -59,9 +60,9 @@ func newRootCmd() *cobra.Command {
 				return fmt.Errorf("app initialization: service building: %w", err)
 			}
 
-			hub := hub.NewHub()
+			msgHub := hub.NewHub()
 
-			srv, err := rest.NewServer(svc, hub, config.HTTPServer)
+			srv, err := rest.NewServer(svc, msgHub, config.HTTPServer)
 			if err != nil {
 				return fmt.Errorf("app initialization: server building: %w", err)
 			}
@@ -89,7 +90,7 @@ func newRootCmd() *cobra.Command {
 			}
 			logger.Info().Msg("server stopped")
 
-			hub.Close()
+			msgHub.Close()
 
 			return nil
 		},
@@ -117,6 +118,9 @@ func setupConfig(cmd *cobra.Command) error {
 
 	if err := viper.BindEnv(envSecretKey); err != nil {
 		return fmt.Errorf("%s env binding: %w", envSecretKey, err)
+	}
+	if err := viper.BindEnv(envTarantoolAddress); err != nil {
+		return fmt.Errorf("%s env binding: %w", envTarantoolAddress, err)
 	}
 	if err := viper.BindEnv(envRedisAddress); err != nil {
 		return fmt.Errorf("%s env binding: %w", envRedisAddress, err)

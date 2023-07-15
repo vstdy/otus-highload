@@ -20,8 +20,7 @@ type IStorage interface {
 	IUserStorage
 	IFriendStorage
 	IPostStorage
-	IChatStorage
-	IDialogStorage
+	IMessageStorage
 }
 
 type IMigration interface {
@@ -45,8 +44,8 @@ type IUserStorage interface {
 	CreateUser(ctx context.Context, obj model.User) (model.User, error)
 	// AuthenticateUser verifies the identity of credentials.
 	AuthenticateUser(ctx context.Context, obj model.User) (model.User, error)
-	// GetUser returns user data.
-	GetUser(ctx context.Context, userUUID uuid.UUID) (model.User, error)
+	// GetUsers returns users data.
+	GetUsers(ctx context.Context, userUUIDs []uuid.UUID) ([]model.User, error)
 	// SearchUsers searches users.
 	SearchUsers(ctx context.Context, firstName, secondName string) ([]model.User, error)
 }
@@ -73,11 +72,16 @@ type IPostStorage interface {
 	PostsFeed(ctx context.Context, userUUID uuid.UUID, page model.Page) ([]model.PostExt, error)
 }
 
+type IMessageStorage interface {
+	IChatStorage
+	IDialogStorage
+}
+
 type IChatStorage interface {
 	// AddChat adds new chat.
-	AddChat(ctx context.Context, user1, user2 uuid.UUID) (uuid.UUID, error)
+	AddChat(ctx context.Context, user1, user2 int64) (uuid.UUID, error)
 	// GetChat returns chat.
-	GetChat(ctx context.Context, user1, user2 uuid.UUID) (uuid.UUID, error)
+	GetChat(ctx context.Context, user1, user2 int64) (uuid.UUID, error)
 }
 
 type IDialogStorage interface {
